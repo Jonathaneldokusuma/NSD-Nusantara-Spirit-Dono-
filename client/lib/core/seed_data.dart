@@ -61,3 +61,36 @@ final seedOverview = PublicOverview.fromJson({
         'amount': 18000000 + index * 3750000,
       }),
 });
+
+final seedCounselors = [
+  const User(
+    id: 'c1',
+    name: 'Ustadzah Siti Amah',
+    email: 'siti@nsd.id',
+    phone: '',
+    role: 'konselor',
+    verified: true,
+    specialization: 'Spiritual, keluarga, dan pemulihan emosi',
+    available: true,
+  ),
+  const User(
+    id: 'c2',
+    name: 'Romo Andreas',
+    email: 'andreas@nsd.id',
+    phone: '',
+    role: 'konselor',
+    verified: true,
+    specialization: 'Dukungan rohani dan konseling umum',
+    available: true,
+  ),
+  const User(
+    id: 'c3',
+    name: 'Dhara Dharmawati',
+    email: 'dhara@nsd.id',
+    phone: '',
+    role: 'konselor',
+    verified: true,
+    specialization: 'Pendampingan trauma dan stres',
+    available: false,
+  ),
+];

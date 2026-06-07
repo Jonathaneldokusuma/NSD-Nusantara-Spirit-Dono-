@@ -5,6 +5,7 @@ import '../core/session.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
 import 'auth_screen.dart';
+import 'counseling_screen.dart';
 import 'campaigns_screen.dart';
 import 'dashboard_screen.dart';
 import 'home_screen.dart';
@@ -63,6 +64,7 @@ class _PublicShellState extends State<PublicShell> {
         applyForAid: () => _openAuth(register: true, role: 'pemohon'),
       ),
       CampaignsScreen(api: widget.api, session: widget.session),
+      CounselingScreen(api: widget.api, session: widget.session),
       TransparencyScreen(api: widget.api),
     ];
 
@@ -77,9 +79,10 @@ class _PublicShellState extends State<PublicShell> {
                     const NsdLogo(),
                     const Spacer(),
                     for (final entry in const [
-                      (0, 'Beranda'),
-                      (1, 'Campaign'),
-                      (2, 'Transparansi'),
+                    (0, 'Beranda'),
+                    (1, 'Campaign'),
+                    (2, 'Konseling'),
+                    (3, 'Transparansi'),
                     ])
                       Padding(
                         padding: const EdgeInsets.only(left: 8),
@@ -157,6 +160,11 @@ class _PublicShellState extends State<PublicShell> {
                   icon: Icon(Icons.volunteer_activism_outlined),
                   selectedIcon: Icon(Icons.volunteer_activism),
                   label: 'Campaign',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.forum_outlined),
+                  selectedIcon: Icon(Icons.forum),
+                  label: 'Konseling',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.insights_outlined),

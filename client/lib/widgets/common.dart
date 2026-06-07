@@ -17,7 +17,7 @@ class NsdLogo extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: NsdColors.green,
+            color: NsdColors.primary,
             borderRadius: BorderRadius.circular(13),
           ),
           child: const Icon(Icons.volunteer_activism, color: Colors.white),
@@ -31,7 +31,7 @@ class NsdLogo extends StatelessWidget {
               Text(
                 'NSD',
                 style: TextStyle(
-                  color: NsdColors.ink,
+                  color: NsdColors.primary,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                   height: 1,
