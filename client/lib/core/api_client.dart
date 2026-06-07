@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -36,6 +37,12 @@ class ApiClient {
   String? _token;
 
   set token(String? value) => _token = value;
+
+  Future<void> syncFirebaseToken() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    _token = await currentUser.getIdToken();
+  }
 
   Future<dynamic> get(String path) => _request('GET', path);
   Future<dynamic> post(String path, [Json? body]) =>

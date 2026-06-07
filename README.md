@@ -22,11 +22,11 @@ Implementasi dibuat berdasarkan dokumen konsep, SKPL, DPPL, dan WBS NSD.
 
 ## Stack
 
-- Client: Flutter 3 / Dart, Material 3, HTTP, Shared Preferences, Socket.IO.
+- Client: Flutter 3 / Dart, Material 3, Firebase Auth, Cloud Firestore, HTTP, Shared Preferences, Socket.IO.
 - Platform: Android, iOS, dan Web/PWA.
-- API: Node.js, Express, TypeScript, JWT, Zod, Socket.IO.
+- API: Node.js, Express, TypeScript, JWT, Firebase Admin, Zod, Socket.IO.
 - Penyimpanan demo: JSON lokal persisten di `server/data/nsd.json`.
-- Acuan production: PostgreSQL, Midtrans, object storage, FCM, WhatsApp, email.
+- Acuan production: Firebase Auth, Cloud Firestore, Storage, FCM, Midtrans, WhatsApp, email.
 
 Skema PostgreSQL tersedia di
 [`docs/postgresql-schema.sql`](docs/postgresql-schema.sql).
@@ -122,9 +122,18 @@ docs/                    Kontrak API dan skema PostgreSQL
 ## Konfigurasi Production
 
 Gunakan `--dart-define=API_URL=https://api.domain-anda.id/api` ketika membangun
-client untuk production. Salin `.env.example` menjadi `.env` untuk mengatur API.
-Tanpa override, build Flutter Web memakai endpoint relatif `/api` pada domain
-yang sama.
+client untuk production. Untuk mode Firebase, tambahkan:
+
+```bash
+--dart-define=FIREBASE_API_KEY=...
+--dart-define=FIREBASE_APP_ID=...
+--dart-define=FIREBASE_MESSAGING_SENDER_ID=...
+--dart-define=FIREBASE_PROJECT_ID=nsd-donasi
+```
+
+Di backend Railway, set `FIREBASE_SERVICE_ACCOUNT_JSON` agar token Firebase
+di-verifikasi oleh API. Tanpa override, build Flutter Web memakai endpoint
+relatif `/api` pada domain yang sama.
 
 Integrasi pembayaran saat ini menggunakan simulasi lokal agar alur dapat diuji
 tanpa kredensial. Midtrans, AWS, FCM, Twilio, dan SES perlu kredensial production

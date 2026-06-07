@@ -1,8 +1,19 @@
 import type { NextFunction, Request, Response } from "express";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import jwt from "jsonwebtoken";
 import type { Role, SafeUser, User } from "./types.js";
 
 const secret = process.env.JWT_SECRET || "nsd-demo-secret-change-in-production";
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
+function ensureFirebaseAdmin() {
+  if (getApps().length > 0) return;
+  if (!serviceAccountJson) return;
+  initializeApp({
+    credential: cert(JSON.parse(serviceAccountJson)),
+  });
+}
 
 export interface AuthPayload {
   sub: string;
@@ -42,7 +53,28 @@ export function authenticate(
     request.auth = jwt.verify(header.slice(7), secret) as AuthPayload;
     next();
   } catch {
-    response.status(401).json({ message: "Sesi tidak valid atau sudah berakhir." });
+    try {
+      ensureFirebaseAdmin();
+      if (!serviceAccountJson || getApps().length === 0) {
+        response.status(401).json({ message: "Sesi tidak valid atau sudah berakhir." });
+        return;
+      }
+      getAdminAuth()
+        .verifyIdToken(header.slice(7))
+        .then((decoded) => {
+          request.auth = {
+            sub: decoded.uid,
+            role: (decoded.role as Role) || "donatur",
+            email: decoded.email || "",
+          };
+          next();
+        })
+        .catch(() => {
+          response.status(401).json({ message: "Sesi tidak valid atau sudah berakhir." });
+        });
+    } catch {
+      response.status(401).json({ message: "Sesi tidak valid atau sudah berakhir." });
+    }
   }
 }
 
@@ -59,4 +91,3 @@ export function allowRoles(...roles: Role[]) {
     next();
   };
 }
-
