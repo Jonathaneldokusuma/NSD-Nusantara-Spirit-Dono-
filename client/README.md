@@ -13,7 +13,7 @@ flutter build apk
 
 API default:
 
-- Flutter Web production: endpoint relatif `/api`
+- Flutter Web production di Firebase Hosting: set `API_URL` ke Railway
 - Flutter Web development: `http://localhost:4000/api` melalui `--dart-define`
 - iOS simulator: `http://localhost:4000/api`
 - Android emulator: `http://10.0.2.2:4000/api`

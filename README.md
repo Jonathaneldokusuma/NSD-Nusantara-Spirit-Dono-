@@ -122,7 +122,15 @@ docs/                    Kontrak API dan skema PostgreSQL
 ## Konfigurasi Production
 
 Gunakan `--dart-define=API_URL=https://api.domain-anda.id/api` ketika membangun
-client untuk production. Untuk mode Firebase, tambahkan:
+client untuk production. Untuk mode Firebase Hosting, build web lalu deploy
+folder `client/build/web` dengan Firebase Hosting:
+
+```bash
+npm run build
+firebase deploy --only hosting
+```
+
+Untuk mode Firebase, tambahkan:
 
 ```bash
 --dart-define=FIREBASE_API_KEY=...
@@ -134,6 +142,20 @@ client untuk production. Untuk mode Firebase, tambahkan:
 Di backend Railway, set `FIREBASE_SERVICE_ACCOUNT_JSON` agar token Firebase
 di-verifikasi oleh API. Tanpa override, build Flutter Web memakai endpoint
 relatif `/api` pada domain yang sama.
+
+## Deploy Split
+
+Rekomendasi deployment sekarang:
+
+- Flutter Web dan admin panel: Firebase Hosting
+- API dan Socket.IO: Railway
+
+Alur deploy:
+
+1. Build web client dengan `npm run build`
+2. Deploy hosting dengan `firebase deploy --only hosting`
+3. Deploy service backend di Railway
+4. Set `API_URL` ke domain Railway saat build Flutter
 
 Integrasi pembayaran saat ini menggunakan simulasi lokal agar alur dapat diuji
 tanpa kredensial. Midtrans, AWS, FCM, Twilio, dan SES perlu kredensial production
