@@ -45,29 +45,30 @@ class NsdApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-    animation: session,
-    builder: (context, _) => MaterialApp(
-      title: 'NSD - Nusantara Spiritual Donation',
-      debugShowCheckedModeBanner: false,
-      theme: nsdTheme(),
-    builder: (context, child) {
-      ErrorWidget.builder = (details) => Material(
-        color: Colors.white,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-                'NSD gagal dimuat.\n${details.exceptionAsString()}\n\nCoba hard refresh atau hapus site data jika layar masih kosong.',
-                textAlign: TextAlign.center,
-              ),
-          ),
-        ),
+        animation: session,
+        builder: (context, _) {
+          ErrorWidget.builder = (details) => Material(
+                color: Colors.white,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'NSD gagal dimuat.\n${details.exceptionAsString()}\n\nCoba hard refresh atau hapus site data jika layar masih kosong.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              );
+
+          return MaterialApp(
+            title: 'NSD - Nusantara Spiritual Donation',
+            debugShowCheckedModeBanner: false,
+            theme: nsdTheme(),
+            builder: (context, child) => child ?? const SizedBox.shrink(),
+            home: kIsWeb
+                ? WebAdminShell(api: api, session: session)
+                : PublicShell(api: api, session: session),
+          );
+        },
       );
-        return child ?? const SizedBox.shrink();
-      },
-      home: kIsWeb
-          ? WebAdminShell(api: api, session: session)
-          : PublicShell(api: api, session: session),
-    ),
-  );
 }
