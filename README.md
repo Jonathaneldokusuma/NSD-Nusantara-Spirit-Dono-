@@ -1,86 +1,138 @@
-# NSD - Nusantara Spiritual Donation ❤️🇮🇩
+# NSD - Nusantara Spiritual Donation
 
-NSD (Nusantara Spiritual Donation) adalah platform donasi darurat yang dirancang untuk membantu masyarakat yang membutuhkan bantuan akibat bencana, kondisi ekonomi, kebutuhan kesehatan, maupun situasi sosial lainnya. Platform ini menghadirkan proses verifikasi melalui konselor dan admin untuk meningkatkan transparansi, kepercayaan, dan ketepatan penyaluran bantuan.
+Platform donasi darurat yang menghubungkan donatur, pemohon bantuan, konselor,
+operator, dan administrator dalam satu alur yang terverifikasi dan transparan.
 
-## ✨ Fitur Utama
+Implementasi ini dibuat berdasarkan dokumen konsep, SKPL, DPPL, dan WBS NSD.
+Versi saat ini adalah MVP full-stack responsif/PWA yang dapat dijalankan langsung
+untuk demonstrasi, pengujian alur, dan pengembangan lanjutan.
 
-### 👤 Donatur
-- Melihat daftar campaign donasi
-- Melihat detail penggalangan dana
-- Melakukan donasi secara online
-- Memantau progres donasi
-- Melihat riwayat donasi
+## Fitur yang Sudah Berjalan
 
-### 🆘 Pemohon Bantuan
-- Registrasi dan login
-- Mengajukan permohonan bantuan
-- Mengunggah dokumen pendukung
-- Berkomunikasi dengan konselor
-- Memantau status pengajuan
+- Beranda responsif dengan campaign darurat dan statistik dampak.
+- Daftar dan detail campaign dengan progres dana real-time.
+- Alur donasi 3 langkah dengan simulasi QRIS dan Virtual Account.
+- Konfirmasi pembayaran simulasi yang memperbarui saldo campaign.
+- Dashboard transparansi publik, grafik donasi, dan riwayat penyaluran.
+- Registrasi dan login dengan JWT serta role-based access control.
+- Pengajuan bantuan beserta dokumen pendukung.
+- Penugasan konselor, rekomendasi, persetujuan admin, dan draft campaign otomatis.
+- Chat konseling real-time menggunakan Socket.IO.
+- Panel admin untuk campaign, penyaluran dana, user, dan audit log.
+- Notifikasi dalam aplikasi dan riwayat donasi pengguna.
+- Ganti password dari dashboard profil.
+- Hot Module Replacement Vite dan restart otomatis API saat development.
 
-### 💬 Konselor
-- Melakukan verifikasi awal terhadap pemohon
-- Memberikan pendampingan dan konsultasi
-- Memvalidasi kondisi pemohon
-- Memberikan rekomendasi kepada admin
+## Stack
 
-### 🛠️ Admin
-- Mengelola campaign donasi
-- Memverifikasi hasil konseling
-- Mempublikasikan penggalangan dana
-- Mengelola laporan donasi
-- Memantau aktivitas sistem
+- Frontend: React 19, TypeScript, Vite, React Router, Lucide.
+- Backend: Node.js, Express, TypeScript, JWT, Zod, Socket.IO.
+- Penyimpanan demo: JSON lokal persisten di `server/data/nsd.json`.
+- Target production: PostgreSQL, object storage, Midtrans, FCM, WhatsApp, dan email.
 
-## 🎯 Tujuan Proyek
+Skema PostgreSQL acuan tersedia di
+[`docs/postgresql-schema.sql`](docs/postgresql-schema.sql).
 
-- Mempercepat proses bantuan kepada masyarakat yang membutuhkan
-- Meningkatkan transparansi dan akuntabilitas donasi
-- Meminimalkan penyalahgunaan bantuan melalui proses verifikasi
-- Membangun ekosistem donasi yang terpercaya dan mudah diakses
+## Menjalankan Aplikasi
 
-## 🏗️ Teknologi
+Persyaratan: Node.js 20 atau lebih baru.
 
-### Frontend Mobile
-- React Native
-- TypeScript
+```bash
+npm install
+npm run dev
+```
 
-### Backend
-- Node.js
-- NestJS
-- REST API
+Buka:
 
-### Database
-- PostgreSQL
-- Redis
+- Web dengan live refresh: `http://localhost:5173`
+- API: `http://localhost:4000/api`
+- Health check: `http://localhost:4000/api/health`
 
-### Cloud & Infrastruktur
-- AWS EC2
-- AWS RDS
-- AWS S3
-- AWS CloudFront
+Vite akan memperbarui frontend tanpa reload penuh. Backend menggunakan `tsx watch`
+dan akan restart otomatis saat file server berubah.
 
-### Integrasi
-- Midtrans Payment Gateway
-- Firebase Cloud Messaging (FCM)
+## Akun Demo
 
-## 📱 Platform
+Semua akun menggunakan password `Demo1234`.
 
-- Android
-- iOS
-- Dashboard Transparansi Berbasis Web
+| Peran | Email |
+| --- | --- |
+| Donatur | `donatur@nsd.id` |
+| Pemohon | `pemohon@nsd.id` |
+| Konselor | `konselor@nsd.id` |
+| Operator | `operator@nsd.id` |
+| Admin | `admin@nsd.id` |
+| Super Admin | `superadmin@nsd.id` |
 
-## 🔒 Fokus Utama
+## Build Production
 
-- Transparansi Donasi
-- Verifikasi Pengajuan Bantuan
-- Pelacakan Donasi Real-Time
-- Pendekatan Human-Centered Design
-- Keamanan Data Pengguna
+```bash
+npm run build
+npm start
+```
 
-## 🚀 Visi
+Setelah build, Express menyajikan frontend dan API dari
+`http://localhost:4000`.
 
-Menjadi platform donasi darurat terpercaya yang menghubungkan masyarakat Indonesia dalam semangat gotong royong, kemanusiaan, dan kepedulian sosial melalui teknologi digital.
+## Perintah Penting
 
----
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run reset:data
+```
 
-> "Bersama Membantu, Bersama Menguatkan."
+`reset:data` mengembalikan database demo ke kondisi awal.
+
+## Struktur Repository
+
+```text
+client/                  React web app responsif
+server/                  REST API, auth, data, Socket.IO
+docs/                    Skema dan dokumentasi teknis
+.github/workflows/       Continuous integration
+```
+
+## API Utama
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/public/overview`
+- `GET /api/campaigns`
+- `POST /api/donations`
+- `POST /api/donations/:id/confirm`
+- `POST /api/applications`
+- `PATCH /api/applications/:id`
+- `GET /api/sessions`
+- `POST /api/sessions/:id/messages`
+- `POST /api/admin/campaigns`
+- `POST /api/admin/disbursements`
+
+Rincian kontrak tersedia di [`docs/API.md`](docs/API.md).
+
+## Konfigurasi
+
+Salin `.env.example` menjadi `.env` untuk mengganti port, JWT secret, lokasi
+data, atau menyiapkan kredensial integrasi production.
+
+Integrasi Midtrans, AWS, FCM, Twilio, dan SES sengaja tidak memakai kredensial
+nyata di repository. Mode demo menyediakan simulasi lokal agar seluruh alur
+bisnis tetap dapat diuji tanpa layanan eksternal.
+
+## Docker
+
+```bash
+docker build -t nsd-app .
+docker run --rm -p 4000:4000 -e JWT_SECRET=ubah-secret-ini nsd-app
+```
+
+## Verifikasi
+
+Project diverifikasi dengan:
+
+- Unit/integration test API dan helper frontend.
+- TypeScript type-check untuk client dan server.
+- Production build Vite dan TypeScript.
+- Uji visual desktop dan mobile.
+- Uji UI end-to-end login, donasi, pembayaran simulasi, dan pembaruan campaign.

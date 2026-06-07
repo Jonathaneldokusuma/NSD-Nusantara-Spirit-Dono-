@@ -1,0 +1,7 @@
+node_modules
+client/dist
+server/dist
+server/data/nsd.json
+qa
+.git
+*.log

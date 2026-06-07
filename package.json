@@ -1,0 +1,25 @@
+{
+  "name": "nsd-nusantara-spiritual-donation",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Platform donasi darurat, transparansi dana, pengajuan bantuan, dan konseling NSD.",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w server && npm run build -w client",
+    "test": "npm run test -w server && npm run test -w client",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
+    "start": "npm run start -w server",
+    "reset:data": "npm run reset:data -w server"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
+
