@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "reset:data": "tsx src/reset-data.ts"
+    "reset:data": "tsx src/reset-data.ts",
+    "seed:firestore": "tsx src/seed-firestore.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
