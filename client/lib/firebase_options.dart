@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 
 class DefaultFirebaseOptions {
-  static FirebaseOptions get currentPlatform {
+  static FirebaseOptions? get currentPlatformOrNull {
     const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
     const appId = String.fromEnvironment('FIREBASE_APP_ID');
     const messagingSenderId =
@@ -12,9 +12,7 @@ class DefaultFirebaseOptions {
         appId.isEmpty ||
         messagingSenderId.isEmpty ||
         projectId.isEmpty) {
-      throw StateError(
-        'Firebase belum dikonfigurasi. Jalankan dengan dart-define FIREBASE_API_KEY, FIREBASE_APP_ID, FIREBASE_MESSAGING_SENDER_ID, dan FIREBASE_PROJECT_ID.',
-      );
+      return null;
     }
 
     return FirebaseOptions(

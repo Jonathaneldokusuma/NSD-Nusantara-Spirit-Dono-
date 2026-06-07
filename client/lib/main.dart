@@ -26,12 +26,9 @@ Future<void> main() async {
     }
     return true;
   };
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } on StateError {
-    // Firebase optional during local demo mode.
+  final firebaseOptions = DefaultFirebaseOptions.currentPlatformOrNull;
+  if (firebaseOptions != null) {
+    await Firebase.initializeApp(options: firebaseOptions);
   }
   final api = ApiClient();
   final session = AuthSession(api);
