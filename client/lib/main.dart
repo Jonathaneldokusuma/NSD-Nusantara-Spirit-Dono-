@@ -50,19 +50,19 @@ class NsdApp extends StatelessWidget {
       title: 'NSD - Nusantara Spiritual Donation',
       debugShowCheckedModeBanner: false,
       theme: nsdTheme(),
-      builder: (context, child) {
-        ErrorWidget.builder = (details) => Material(
-          color: Colors.white,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'NSD gagal dimuat.\n${details.exceptionAsString()}',
+    builder: (context, child) {
+      ErrorWidget.builder = (details) => Material(
+        color: Colors.white,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+                'NSD gagal dimuat.\n${details.exceptionAsString()}\n\nCoba hard refresh atau hapus site data jika layar masih kosong.',
                 textAlign: TextAlign.center,
               ),
-            ),
           ),
-        );
+        ),
+      );
         return child ?? const SizedBox.shrink();
       },
       home: kIsWeb
