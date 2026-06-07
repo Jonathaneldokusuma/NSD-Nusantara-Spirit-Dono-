@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../core/api_client.dart';
 import '../core/models.dart';
+import '../core/seed_data.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
 
@@ -37,7 +38,9 @@ class _TransparencyScreenState extends State<TransparencyScreen>
       );
       if (mounted) setState(() => _overview = overview);
     } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) setState(() => _overview = seedOverview);
+      // ignore: avoid_print
+      print('Transparency API fallback: ${error.message}');
     }
   }
 

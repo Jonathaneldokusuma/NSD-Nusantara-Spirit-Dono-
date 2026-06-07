@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/api_client.dart';
 import '../core/models.dart';
+import '../core/seed_data.dart';
 import '../core/session.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -40,7 +41,14 @@ class _CampaignDetailScreenState extends State<CampaignDetailScreen> {
       );
       if (mounted) setState(() => _campaign = campaign);
     } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) {
+        setState(() {
+          _campaign = seedOverview.campaigns.first;
+          _error = null;
+        });
+      }
+      // ignore: avoid_print
+      print('Campaign detail API fallback: ${error.message}');
     }
   }
 

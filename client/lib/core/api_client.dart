@@ -22,7 +22,7 @@ class ApiClient {
   static String get baseUrl {
     const configured = String.fromEnvironment('API_URL');
     if (configured.isNotEmpty) return configured;
-    if (kIsWeb) return '/api';
+    if (kIsWeb) return 'https://nsdserver-production.up.railway.app/api';
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:4000/api';
     }

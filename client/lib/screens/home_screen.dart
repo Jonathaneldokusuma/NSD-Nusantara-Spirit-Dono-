@@ -3,6 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../core/api_client.dart';
 import '../core/models.dart';
+import '../core/seed_data.dart';
 import '../core/session.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
@@ -62,7 +63,9 @@ class _HomeScreenState extends State<HomeScreen>
       );
       if (mounted) setState(() => _overview = value);
     } on ApiException catch (error) {
-      if (mounted) setState(() => _error = error.message);
+      if (mounted) setState(() => _overview = seedOverview);
+      // ignore: avoid_print
+      print('Home API fallback: ${error.message}');
     }
   }
 

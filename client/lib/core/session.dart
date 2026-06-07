@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_client.dart';
@@ -16,20 +17,26 @@ class AuthSession extends ChangeNotifier {
   bool get isAuthenticated => user != null;
 
   Future<void> restore() async {
-    final firebaseUser = fb.FirebaseAuth.instance.currentUser;
-    if (firebaseUser != null) {
-      api.token = await firebaseUser.getIdToken();
-      user = User(
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName ?? firebaseUser.email ?? 'Pengguna',
-        email: firebaseUser.email ?? '',
-        phone: firebaseUser.phoneNumber ?? '',
-        role: 'donatur',
-        verified: firebaseUser.emailVerified,
-      );
-      initializing = false;
-      notifyListeners();
-      return;
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        final firebaseUser = fb.FirebaseAuth.instance.currentUser;
+        if (firebaseUser != null) {
+          api.token = await firebaseUser.getIdToken();
+          user = User(
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName ?? firebaseUser.email ?? 'Pengguna',
+            email: firebaseUser.email ?? '',
+            phone: firebaseUser.phoneNumber ?? '',
+            role: 'donatur',
+            verified: firebaseUser.emailVerified,
+          );
+          initializing = false;
+          notifyListeners();
+          return;
+        }
+      }
+    } on Exception {
+      // Fall back to local/demo session when Firebase is not configured yet.
     }
 
     final preferences = await SharedPreferences.getInstance();
@@ -48,6 +55,22 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password) async {
+    if (Firebase.apps.isEmpty) {
+      final response =
+          await api.post('/auth/login', {
+                'email': email.trim(),
+                'password': password,
+              })
+              as Json;
+      final token = response['token'] as String;
+      api.token = token;
+      user = User.fromJson(response['user'] as Json);
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_tokenKey, token);
+      notifyListeners();
+      return;
+    }
+
     try {
       final credential = await fb.FirebaseAuth.instance
           .signInWithEmailAndPassword(
@@ -77,6 +100,25 @@ class AuthSession extends ChangeNotifier {
     required String password,
     required String role,
   }) async {
+    if (Firebase.apps.isEmpty) {
+      final response =
+          await api.post('/auth/register', {
+                'name': name.trim(),
+                'email': email.trim(),
+                'phone': phone.trim(),
+                'password': password,
+                'role': role,
+              })
+              as Json;
+      final token = response['token'] as String;
+      api.token = token;
+      user = User.fromJson(response['user'] as Json);
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_tokenKey, token);
+      notifyListeners();
+      return;
+    }
+
     try {
       final credential = await fb.FirebaseAuth.instance
           .createUserWithEmailAndPassword(
@@ -104,7 +146,9 @@ class AuthSession extends ChangeNotifier {
   Future<void> logout() async {
     user = null;
     api.token = null;
-    await fb.FirebaseAuth.instance.signOut();
+    if (Firebase.apps.isNotEmpty) {
+      await fb.FirebaseAuth.instance.signOut();
+    }
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove(_tokenKey);
     notifyListeners();
