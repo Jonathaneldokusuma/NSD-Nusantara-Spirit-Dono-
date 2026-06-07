@@ -7,6 +7,7 @@ import 'core/session.dart';
 import 'core/theme.dart';
 import 'firebase_options.dart';
 import 'screens/public_shell.dart';
+import 'screens/web_admin_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,7 +65,9 @@ class NsdApp extends StatelessWidget {
         );
         return child ?? const SizedBox.shrink();
       },
-      home: PublicShell(api: api, session: session),
+      home: kIsWeb
+          ? WebAdminShell(api: api, session: session)
+          : PublicShell(api: api, session: session),
     ),
   );
 }

@@ -56,7 +56,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
     if (['donatur', 'pemohon', 'konselor'].contains(user.role)) {
-      items.add(const _NavItem('Konseling', Icons.forum_outlined, 'sessions'));
+      items.add(
+        const _NavItem('Ruang Konseling', Icons.forum_outlined, 'sessions'),
+      );
     }
     if (['operator', 'admin', 'super_admin'].contains(user.role)) {
       items.add(
