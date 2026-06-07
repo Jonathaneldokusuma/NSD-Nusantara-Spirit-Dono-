@@ -102,7 +102,22 @@ export function createApp(
 ) {
   const app = express();
   app.set("trust proxy", 1);
-  app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-eval'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          connectSrc: ["'self'", "ws:", "wss:", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "blob:"],
+          fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+          workerSrc: ["'self'", "blob:"],
+        },
+      },
+    }),
+  );
   app.use(
     cors({
       origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",

@@ -3,15 +3,20 @@
   "private": true,
   "version": "1.0.0",
   "description": "Platform donasi darurat, transparansi dana, pengajuan bantuan, dan konseling NSD.",
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "workspaces": ["server"],
   "scripts": {
-    "dev": "concurrently -n API,WEB -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
-    "build": "npm run build -w server && npm run build -w client",
-    "test": "npm run test -w server && npm run test -w client",
-    "typecheck": "npm run typecheck -w server && npm run typecheck -w client",
+    "dev": "concurrently --kill-others-on-fail -n API,FLUTTER -c blue,green \"npm run dev:api\" \"npm run dev:flutter\"",
+    "dev:api": "npm run dev -w server",
+    "dev:flutter": "cd client && flutter run -d chrome --web-port 5173 --dart-define=API_URL=http://localhost:4000/api",
+    "build": "npm run build:api && npm run build:flutter",
+    "build:api": "npm run build -w server",
+    "build:flutter": "cd client && flutter build web --no-web-resources-cdn --no-wasm-dry-run",
+    "test": "npm run test:api && npm run test:flutter",
+    "test:api": "npm run test -w server",
+    "test:flutter": "cd client && flutter test",
+    "typecheck": "npm run typecheck:api && npm run analyze:flutter",
+    "typecheck:api": "npm run typecheck -w server",
+    "analyze:flutter": "cd client && flutter analyze",
     "start": "npm run start -w server",
     "reset:data": "npm run reset:data -w server"
   },
@@ -22,4 +27,3 @@
     "concurrently": "^9.2.1"
   }
 }
-

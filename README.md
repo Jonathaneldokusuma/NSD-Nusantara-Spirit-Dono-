@@ -1,55 +1,72 @@
 # NSD - Nusantara Spiritual Donation
 
-Platform donasi darurat yang menghubungkan donatur, pemohon bantuan, konselor,
-operator, dan administrator dalam satu alur yang terverifikasi dan transparan.
+Aplikasi Flutter lintas Android, iOS, dan Web untuk donasi darurat, pengajuan
+bantuan, konseling, verifikasi, serta transparansi penyaluran dana.
 
-Implementasi ini dibuat berdasarkan dokumen konsep, SKPL, DPPL, dan WBS NSD.
-Versi saat ini adalah MVP full-stack responsif/PWA yang dapat dijalankan langsung
-untuk demonstrasi, pengujian alur, dan pengembangan lanjutan.
+Implementasi dibuat berdasarkan dokumen konsep, SKPL, DPPL, dan WBS NSD.
 
-## Fitur yang Sudah Berjalan
+## Fitur
 
-- Beranda responsif dengan campaign darurat dan statistik dampak.
-- Daftar dan detail campaign dengan progres dana real-time.
-- Alur donasi 3 langkah dengan simulasi QRIS dan Virtual Account.
-- Konfirmasi pembayaran simulasi yang memperbarui saldo campaign.
-- Dashboard transparansi publik, grafik donasi, dan riwayat penyaluran.
-- Registrasi dan login dengan JWT serta role-based access control.
-- Pengajuan bantuan beserta dokumen pendukung.
-- Penugasan konselor, rekomendasi, persetujuan admin, dan draft campaign otomatis.
-- Chat konseling real-time menggunakan Socket.IO.
-- Panel admin untuk campaign, penyaluran dana, user, dan audit log.
-- Notifikasi dalam aplikasi dan riwayat donasi pengguna.
-- Ganti password dari dashboard profil.
-- Hot Module Replacement Vite dan restart otomatis API saat development.
+- Beranda Flutter responsif dengan campaign darurat dan statistik dampak.
+- Daftar, pencarian, filter, dan detail campaign terverifikasi.
+- Donasi tiga tahap dengan simulasi QRIS dan Virtual Account.
+- Pembaruan dana campaign real-time melalui Socket.IO.
+- Registrasi, login JWT, pemulihan sesi, dan akses berbasis peran.
+- Pengajuan bantuan beserta daftar dokumen pendukung.
+- Penugasan konselor, rekomendasi, persetujuan, dan pembuatan campaign.
+- Chat konseling real-time.
+- Dashboard donatur, pemohon, konselor, operator, admin, dan super admin.
+- Panel campaign, pengguna, notifikasi, profil, dan audit aktivitas.
+- Dashboard transparansi beserta grafik dan riwayat penyaluran.
+- Flutter hot reload untuk pengembangan Web dan mobile.
 
 ## Stack
 
-- Frontend: React 19, TypeScript, Vite, React Router, Lucide.
-- Backend: Node.js, Express, TypeScript, JWT, Zod, Socket.IO.
+- Client: Flutter 3 / Dart, Material 3, HTTP, Shared Preferences, Socket.IO.
+- Platform: Android, iOS, dan Web/PWA.
+- API: Node.js, Express, TypeScript, JWT, Zod, Socket.IO.
 - Penyimpanan demo: JSON lokal persisten di `server/data/nsd.json`.
-- Target production: PostgreSQL, object storage, Midtrans, FCM, WhatsApp, dan email.
+- Acuan production: PostgreSQL, Midtrans, object storage, FCM, WhatsApp, email.
 
-Skema PostgreSQL acuan tersedia di
+Skema PostgreSQL tersedia di
 [`docs/postgresql-schema.sql`](docs/postgresql-schema.sql).
 
-## Menjalankan Aplikasi
+## Menjalankan dengan Hot Reload
 
-Persyaratan: Node.js 20 atau lebih baru.
+Persyaratan:
+
+- Flutter 3.43 atau versi stable terbaru.
+- Node.js 20 atau lebih baru.
+- Google Chrome untuk target Flutter Web.
 
 ```bash
 npm install
+cd client
+flutter pub get
+cd ..
 npm run dev
 ```
 
-Buka:
+Perintah tersebut menjalankan:
 
-- Web dengan live refresh: `http://localhost:5173`
-- API: `http://localhost:4000/api`
+- Flutter Web dengan hot reload: `http://localhost:5173`
+- REST API dan Socket.IO: `http://localhost:4000`
 - Health check: `http://localhost:4000/api/health`
 
-Vite akan memperbarui frontend tanpa reload penuh. Backend menggunakan `tsx watch`
-dan akan restart otomatis saat file server berubah.
+Untuk menjalankan langsung di Android:
+
+```bash
+npm run dev:api
+cd client
+flutter run
+```
+
+Android emulator otomatis memakai `http://10.0.2.2:4000/api`. Untuk perangkat
+fisik, gunakan alamat IP komputer:
+
+```bash
+flutter run --dart-define=API_URL=http://192.168.1.10:4000/api
+```
 
 ## Akun Demo
 
@@ -64,61 +81,54 @@ Semua akun menggunakan password `Demo1234`.
 | Admin | `admin@nsd.id` |
 | Super Admin | `superadmin@nsd.id` |
 
-## Build Production
-
-```bash
-npm run build
-npm start
-```
-
-Setelah build, Express menyajikan frontend dan API dari
-`http://localhost:4000`.
-
-## Perintah Penting
+## Verifikasi dan Build
 
 ```bash
 npm run typecheck
 npm test
 npm run build
-npm run reset:data
 ```
 
-`reset:data` mengembalikan database demo ke kondisi awal.
+Build Flutter Web dihasilkan pada `client/build/web`. Setelah build, Express
+menyajikan aplikasi Flutter dan API pada `http://localhost:4000`.
+
+Build Android:
+
+```bash
+cd client
+flutter build apk
+```
+
+Perintah lain:
+
+```bash
+npm run reset:data
+npm run dev:api
+npm run dev:flutter
+```
 
 ## Struktur Repository
 
 ```text
-client/                  React web app responsif
-server/                  REST API, auth, data, Socket.IO
-docs/                    Skema dan dokumentasi teknis
-.github/workflows/       Continuous integration
+client/                  Flutter app Android, iOS, dan Web
+  lib/core/              Model, API client, sesi, dan tema
+  lib/screens/           Halaman publik, donasi, dan dashboard multi-role
+  lib/widgets/           Komponen UI reusable
+server/                  REST API, JWT, Socket.IO, dan data demo
+docs/                    Kontrak API dan skema PostgreSQL
+.github/workflows/       CI Node.js dan Flutter
 ```
 
-## API Utama
+## Konfigurasi Production
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/public/overview`
-- `GET /api/campaigns`
-- `POST /api/donations`
-- `POST /api/donations/:id/confirm`
-- `POST /api/applications`
-- `PATCH /api/applications/:id`
-- `GET /api/sessions`
-- `POST /api/sessions/:id/messages`
-- `POST /api/admin/campaigns`
-- `POST /api/admin/disbursements`
+Gunakan `--dart-define=API_URL=https://api.domain-anda.id/api` ketika membangun
+client untuk production. Salin `.env.example` menjadi `.env` untuk mengatur API.
+Tanpa override, build Flutter Web memakai endpoint relatif `/api` pada domain
+yang sama.
 
-Rincian kontrak tersedia di [`docs/API.md`](docs/API.md).
-
-## Konfigurasi
-
-Salin `.env.example` menjadi `.env` untuk mengganti port, JWT secret, lokasi
-data, atau menyiapkan kredensial integrasi production.
-
-Integrasi Midtrans, AWS, FCM, Twilio, dan SES sengaja tidak memakai kredensial
-nyata di repository. Mode demo menyediakan simulasi lokal agar seluruh alur
-bisnis tetap dapat diuji tanpa layanan eksternal.
+Integrasi pembayaran saat ini menggunakan simulasi lokal agar alur dapat diuji
+tanpa kredensial. Midtrans, AWS, FCM, Twilio, dan SES perlu kredensial production
+sebelum aplikasi menerima transaksi nyata.
 
 ## Docker
 
@@ -127,12 +137,5 @@ docker build -t nsd-app .
 docker run --rm -p 4000:4000 -e JWT_SECRET=ubah-secret-ini nsd-app
 ```
 
-## Verifikasi
-
-Project diverifikasi dengan:
-
-- Unit/integration test API dan helper frontend.
-- TypeScript type-check untuk client dan server.
-- Production build Vite dan TypeScript.
-- Uji visual desktop dan mobile.
-- Uji UI end-to-end login, donasi, pembayaran simulasi, dan pembaruan campaign.
+Image Docker membangun Flutter Web dan API, lalu menyajikannya melalui satu
+service Node.js pada port 4000.

@@ -1,9 +1,16 @@
 node_modules/
 dist/
+client/.dart_tool/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+client/build/
+client/.idea/
+client/*.iml
 .env
 .env.local
 coverage/
 server/data/nsd.json
 qa/
 *.log
+hs_err_pid*
 .DS_Store

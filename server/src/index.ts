@@ -9,7 +9,7 @@ import { JsonStore } from "./store.js";
 
 const port = Number(process.env.PORT || 4000);
 const serverDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const clientDist = path.resolve(serverDir, "..", "client", "dist");
+const clientDist = path.resolve(serverDir, "..", "client", "build", "web");
 const store = new JsonStore();
 
 let io: Server;
@@ -40,4 +40,3 @@ httpServer.listen(port, () => {
     console.log(`NSD web production tersedia di http://localhost:${port}`);
   }
 });
-

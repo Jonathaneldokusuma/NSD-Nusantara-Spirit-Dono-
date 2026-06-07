@@ -1,5 +1,6 @@
 node_modules
-client/dist
+client/.dart_tool
+client/build
 server/dist
 server/data/nsd.json
 qa
