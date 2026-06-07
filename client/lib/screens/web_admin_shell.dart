@@ -5,7 +5,6 @@ import '../core/models.dart';
 import '../core/session.dart';
 import '../core/theme.dart';
 import '../widgets/common.dart';
-import 'auth_screen.dart';
 import 'dashboard_screen.dart';
 
 class WebAdminShell extends StatefulWidget {
@@ -19,22 +18,37 @@ class WebAdminShell extends StatefulWidget {
 }
 
 class _WebAdminShellState extends State<WebAdminShell> {
-  Future<void> _openAuth() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AuthScreen(
-          session: widget.session,
-          registerInitially: false,
-          initialRole: 'admin',
-        ),
-      ),
-    );
-    if (mounted) setState(() {});
+  final _email = TextEditingController(text: 'admin@nsd.id');
+  final _password = TextEditingController(text: 'Demo1234');
+  final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await widget.session.login(_email.text, _password.text);
+      if (mounted) setState(() {});
+    } on ApiException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _openDashboard() {
     if (!widget.session.isAuthenticated) {
-      _openAuth();
       return;
     }
     Navigator.of(context).push(
@@ -53,15 +67,19 @@ class _WebAdminShellState extends State<WebAdminShell> {
         toolbarHeight: 74,
         title: const NsdLogo(),
         actions: [
-          TextButton(
-            onPressed: _openAuth,
-            child: Text(authenticated ? 'Ganti akun' : 'Masuk Admin'),
-          ),
+          if (authenticated)
+            TextButton(
+              onPressed: () async {
+                await widget.session.logout();
+                if (mounted) setState(() {});
+              },
+              child: const Text('Keluar'),
+            ),
           const SizedBox(width: 8),
           FilledButton.icon(
-            onPressed: _openDashboard,
+            onPressed: authenticated ? _openDashboard : _login,
             icon: const Icon(Icons.dashboard_outlined, size: 18),
-            label: const Text('Buka Panel'),
+            label: Text(authenticated ? 'Buka Panel' : 'Masuk Admin'),
           ),
           const SizedBox(width: 16),
         ],
@@ -83,56 +101,124 @@ class _WebAdminShellState extends State<WebAdminShell> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'Panel web khusus untuk operator, admin, super admin, dan konselor. Aplikasi mobile tetap dipakai untuk donatur dan pemohon di HP.',
+                'Web ini khusus untuk admin, operator, super admin, dan konselor. Donatur dan pemohon memakai app mobile terpisah di HP.',
                 style: TextStyle(fontSize: 18, height: 1.6),
               ),
               const SizedBox(height: 28),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: const [
-                  _AdminCard(
-                    icon: Icons.campaign_outlined,
-                    title: 'Kelola Campaign',
-                    message: 'Moderasi, verifikasi, dan update status campaign.',
-                  ),
-                  _AdminCard(
-                    icon: Icons.forum_outlined,
-                    title: 'Konseling',
-                    message: 'Pantau sesi pendampingan dan pesan konselor.',
-                  ),
-                  _AdminCard(
-                    icon: Icons.fact_check_outlined,
-                    title: 'Pengajuan Bantuan',
-                    message: 'Tinjau, setujui, dan tindak lanjuti aplikasi bantuan.',
-                  ),
-                  _AdminCard(
-                    icon: Icons.security_outlined,
-                    title: 'Audit & Transparansi',
-                    message: 'Lihat log aktivitas dan laporan penyaluran dana.',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
               if (!authenticated)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Masuk untuk membuka dashboard admin dan konseling.',
-                            style: TextStyle(fontSize: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: const [
+                          _AdminCard(
+                            icon: Icons.campaign_outlined,
+                            title: 'Kelola Campaign',
+                            message:
+                                'Moderasi, verifikasi, dan update status campaign.',
+                          ),
+                          _AdminCard(
+                            icon: Icons.forum_outlined,
+                            title: 'Konseling',
+                            message:
+                                'Pantau sesi pendampingan dan pesan konselor.',
+                          ),
+                          _AdminCard(
+                            icon: Icons.fact_check_outlined,
+                            title: 'Pengajuan Bantuan',
+                            message:
+                                'Tinjau, setujui, dan tindak lanjuti aplikasi bantuan.',
+                          ),
+                          _AdminCard(
+                            icon: Icons.security_outlined,
+                            title: 'Audit & Transparansi',
+                            message:
+                                'Lihat log aktivitas dan laporan penyaluran dana.',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    SizedBox(
+                      width: 380,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'Masuk Admin',
+                                  style:
+                                      Theme.of(context).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Gunakan akun admin/operator/konselor.',
+                                ),
+                                const SizedBox(height: 18),
+                                TextFormField(
+                                  controller: _email,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                    prefixIcon: Icon(Icons.mail_outline),
+                                  ),
+                                  validator: (value) =>
+                                      !(value?.contains('@') ?? false)
+                                      ? 'Email tidak valid.'
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _password,
+                                  obscureText: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: Icon(Icons.lock_outline),
+                                  ),
+                                  validator: (value) =>
+                                      (value?.isEmpty ?? true)
+                                      ? 'Password wajib diisi.'
+                                      : null,
+                                ),
+                                const SizedBox(height: 16),
+                                if (_error != null) ...[
+                                  Text(
+                                    _error!,
+                                    style: const TextStyle(
+                                      color: NsdColors.coral,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                                FilledButton(
+                                  onPressed: _loading ? null : _login,
+                                  child: _loading
+                                      ? const CircularProgressIndicator(
+                                          color: Colors.white,
+                                        )
+                                      : const Text('Masuk ke Panel'),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  'Demo admin: admin@nsd.id / Demo1234',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        FilledButton(
-                          onPressed: _openAuth,
-                          child: const Text('Masuk'),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 )
               else
                 Card(
