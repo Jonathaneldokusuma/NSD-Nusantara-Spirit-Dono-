@@ -28,7 +28,68 @@ class NsdAppUser extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: nsdTheme(),
       builder: (context, child) => child ?? const SizedBox.shrink(),
-      home: PublicShell(api: api, session: session),
+      home: _UserGate(api: api, session: session),
+    ),
+  );
+}
+
+class _UserGate extends StatelessWidget {
+  const _UserGate({required this.api, required this.session});
+
+  final ApiClient api;
+  final AuthSession session;
+
+  bool get _hasUserAccess =>
+      !session.isAuthenticated ||
+      ['donatur', 'pemohon'].contains(session.user?.role);
+
+  @override
+  Widget build(BuildContext context) {
+    if (session.initializing) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_hasUserAccess) {
+      return PublicShell(api: api, session: session);
+    }
+    return _UserAccessDenied(session: session);
+  }
+}
+
+class _UserAccessDenied extends StatelessWidget {
+  const _UserAccessDenied({required this.session});
+
+  final AuthSession session;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: SizedBox(
+        width: 420,
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Akses Aplikasi User Ditolak',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Aplikasi ini hanya untuk donatur dan pemohon. Gunakan panel internal atau aplikasi konselor sesuai peran akun.',
+                ),
+                const SizedBox(height: 18),
+                FilledButton(
+                  onPressed: () => session.logout(),
+                  child: const Text('Keluar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     ),
   );
 }
