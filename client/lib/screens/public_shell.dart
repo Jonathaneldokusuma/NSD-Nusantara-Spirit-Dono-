@@ -24,9 +24,22 @@ class PublicShell extends StatefulWidget {
 class _PublicShellState extends State<PublicShell> {
   int _index = 0;
 
+  bool get _hasUserAccess {
+    final role = widget.session.user?.role;
+    return ['donatur', 'pemohon'].contains(role);
+  }
+
   void _openDashboard() {
     if (!widget.session.isAuthenticated) {
       _openAuth();
+      return;
+    }
+    if (!_hasUserAccess) {
+      showMessage(
+        context,
+        'Akun ini tidak dapat memakai aplikasi user. Gunakan aplikasi sesuai peran.',
+        error: true,
+      );
       return;
     }
     Navigator.of(context).push(
@@ -50,7 +63,18 @@ class _PublicShellState extends State<PublicShell> {
         ),
       ),
     );
-    if (mounted && widget.session.isAuthenticated) setState(() {});
+    if (!mounted || !widget.session.isAuthenticated) return;
+    if (!_hasUserAccess) {
+      await widget.session.logout();
+      if (!mounted) return;
+      showMessage(
+        context,
+        'Akun ini tidak dapat memakai aplikasi user. Gunakan aplikasi sesuai peran.',
+        error: true,
+      );
+      return;
+    }
+    setState(() {});
   }
 
   @override
@@ -79,10 +103,10 @@ class _PublicShellState extends State<PublicShell> {
                     const NsdLogo(),
                     const Spacer(),
                     for (final entry in const [
-                    (0, 'Beranda'),
-                    (1, 'Campaign'),
-                    (2, 'Konseling'),
-                    (3, 'Transparansi'),
+                      (0, 'Beranda'),
+                      (1, 'Campaign'),
+                      (2, 'Konseling'),
+                      (3, 'Transparansi'),
                     ])
                       Padding(
                         padding: const EdgeInsets.only(left: 8),

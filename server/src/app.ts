@@ -83,7 +83,9 @@ function getDailySeries(donations: Donation[]) {
     return { date: key, amount: 0 };
   });
 
-  const successful = donations.filter((donation) => donation.status === "sukses");
+  const successful = donations.filter(
+    (donation) => donation.status === "sukses",
+  );
   for (const donation of successful) {
     const key = donation.createdAt.slice(0, 10);
     const item = days.find((day) => day.date === key);
@@ -92,7 +94,8 @@ function getDailySeries(donations: Donation[]) {
 
   return days.map((day, index) => ({
     ...day,
-    amount: day.amount || 18_000_000 + index * 3_750_000 + (index % 3) * 8_500_000,
+    amount:
+      day.amount || 18_000_000 + index * 3_750_000 + (index % 3) * 8_500_000,
   }));
 }
 
@@ -163,7 +166,9 @@ export function createApp(
         ).length,
         donors: campaigns.reduce((sum, item) => sum + item.donorCount, 0),
         verifiedApplications: database.applications.filter((item) =>
-          ["direkomendasikan", "disetujui", "dipublikasikan"].includes(item.status),
+          ["direkomendasikan", "disetujui", "dipublikasikan"].includes(
+            item.status,
+          ),
         ).length,
       },
       campaigns,
@@ -180,7 +185,8 @@ export function createApp(
     let campaigns = store.read().campaigns;
 
     if (status) campaigns = campaigns.filter((item) => item.status === status);
-    if (category) campaigns = campaigns.filter((item) => item.category === category);
+    if (category)
+      campaigns = campaigns.filter((item) => item.category === category);
     if (search) {
       campaigns = campaigns.filter((item) =>
         [item.title, item.summary, item.location, item.category]
@@ -195,7 +201,8 @@ export function createApp(
   app.get("/api/campaigns/:id", (request, response) => {
     const database = store.read();
     const campaign = database.campaigns.find(
-      (item) => item.id === request.params.id || item.slug === request.params.id,
+      (item) =>
+        item.id === request.params.id || item.slug === request.params.id,
     );
     if (!campaign) {
       response.status(404).json({ message: "Campaign tidak ditemukan." });
@@ -249,7 +256,12 @@ export function createApp(
       createdAt: new Date().toISOString(),
     };
     store.update((data) => data.users.push(user));
-    audit(store, request, "REGISTER", `Akun ${email} dibuat sebagai ${input.role}.`);
+    audit(
+      store,
+      request,
+      "REGISTER",
+      `Akun ${email} dibuat sebagai ${input.role}.`,
+    );
     response.status(201).json({ token: signToken(user), user: safeUser(user) });
   });
 
@@ -264,8 +276,15 @@ export function createApp(
       .read()
       .users.find((item) => item.email === input.email.toLowerCase());
     if (!user || !bcrypt.compareSync(input.password, user.passwordHash)) {
-      audit(store, request, "LOGIN_FAILED", `Login gagal untuk ${input.email}.`);
-      response.status(401).json({ message: "Email atau password tidak sesuai." });
+      audit(
+        store,
+        request,
+        "LOGIN_FAILED",
+        `Login gagal untuk ${input.email}.`,
+      );
+      response
+        .status(401)
+        .json({ message: "Email atau password tidak sesuai." });
       return;
     }
     if (!user.verified) {
@@ -273,7 +292,12 @@ export function createApp(
       return;
     }
 
-    audit(store, request, "LOGIN_SUCCESS", `Login berhasil untuk ${user.email}.`);
+    audit(
+      store,
+      request,
+      "LOGIN_SUCCESS",
+      `Login berhasil untuk ${user.email}.`,
+    );
     response.json({ token: signToken(user), user: safeUser(user) });
   });
 
@@ -281,7 +305,9 @@ export function createApp(
     "/api/auth/me",
     authenticate,
     (request: AuthenticatedRequest, response) => {
-      const user = store.read().users.find((item) => item.id === request.auth?.sub);
+      const user = store
+        .read()
+        .users.find((item) => item.id === request.auth?.sub);
       if (!user) {
         response.status(404).json({ message: "Pengguna tidak ditemukan." });
         return;
@@ -300,31 +326,39 @@ export function createApp(
           newPassword: z.string().min(8).max(128),
         })
         .parse(request.body);
-      const user = store.read().users.find((item) => item.id === request.auth?.sub);
-      if (!user || !bcrypt.compareSync(input.currentPassword, user.passwordHash)) {
-        response.status(400).json({ message: "Password saat ini tidak sesuai." });
+      const user = store
+        .read()
+        .users.find((item) => item.id === request.auth?.sub);
+      if (
+        !user ||
+        !bcrypt.compareSync(input.currentPassword, user.passwordHash)
+      ) {
+        response
+          .status(400)
+          .json({ message: "Password saat ini tidak sesuai." });
         return;
       }
       store.update((database) => {
         const current = database.users.find((item) => item.id === user.id)!;
         current.passwordHash = bcrypt.hashSync(input.newPassword, 10);
       });
-      audit(store, request, "PASSWORD_CHANGED", `Password ${user.email} diperbarui.`);
+      audit(
+        store,
+        request,
+        "PASSWORD_CHANGED",
+        `Password ${user.email} diperbarui.`,
+      );
       response.status(204).send();
     },
   );
 
-  app.get(
-    "/api/counselors",
-    authenticate,
-    (_request, response) => {
-      const counselors = store
-        .read()
-        .users.filter((user) => user.role === "konselor")
-        .map(safeUser);
-      response.json(counselors);
-    },
-  );
+  app.get("/api/counselors", authenticate, (_request, response) => {
+    const counselors = store
+      .read()
+      .users.filter((user) => user.role === "konselor")
+      .map(safeUser);
+    response.json(counselors);
+  });
 
   const donationSchema = z.object({
     campaignId: z.string().min(1),
@@ -344,7 +378,9 @@ export function createApp(
         .read()
         .campaigns.find((item) => item.id === input.campaignId);
       if (!campaign || !["aktif", "darurat"].includes(campaign.status)) {
-        response.status(400).json({ message: "Campaign tidak dapat menerima donasi." });
+        response
+          .status(400)
+          .json({ message: "Campaign tidak dapat menerima donasi." });
         return;
       }
 
@@ -399,7 +435,9 @@ export function createApp(
 
       if (donation.status !== "sukses") {
         store.update((data) => {
-          const current = data.donations.find((item) => item.id === donation.id)!;
+          const current = data.donations.find(
+            (item) => item.id === donation.id,
+          )!;
           current.status = "sukses";
           current.paidAt = new Date().toISOString();
           const campaign = data.campaigns.find(
@@ -485,7 +523,9 @@ export function createApp(
       response.json(
         store
           .read()
-          .applications.filter((item) => item.applicantId === request.auth?.sub),
+          .applications.filter(
+            (item) => item.applicantId === request.auth?.sub,
+          ),
       );
     },
   );
@@ -494,10 +534,16 @@ export function createApp(
     "/api/applications",
     authenticate,
     allowRoles("konselor", "operator", "admin", "super_admin"),
-    (_request, response) => {
+    (request: AuthenticatedRequest, response) => {
       const database = store.read();
+      const applications =
+        request.auth!.role === "konselor"
+          ? database.applications.filter(
+              (item) => item.counselorId === request.auth!.sub,
+            )
+          : database.applications;
       response.json(
-        database.applications.map((item) => ({
+        applications.map((item) => ({
           ...item,
           applicant: safeUser(
             database.users.find((user) => user.id === item.applicantId)!,
@@ -531,6 +577,32 @@ export function createApp(
       if (!application) {
         response.status(404).json({ message: "Pengajuan tidak ditemukan." });
         return;
+      }
+      if (request.auth!.role === "konselor") {
+        if (application.counselorId !== request.auth!.sub) {
+          response.status(403).json({
+            message:
+              "Konselor hanya dapat memproses pengajuan yang ditugaskan.",
+          });
+          return;
+        }
+        if (input.counselorId !== undefined || input.adminNotes !== undefined) {
+          response.status(403).json({
+            message:
+              "Konselor tidak dapat menugaskan konselor atau mengisi catatan admin.",
+          });
+          return;
+        }
+        if (
+          input.status &&
+          !["konseling", "direkomendasikan"].includes(input.status)
+        ) {
+          response.status(403).json({
+            message:
+              "Konselor hanya dapat memperbarui status konseling atau rekomendasi.",
+          });
+          return;
+        }
       }
 
       store.update((database) => {
@@ -700,7 +772,9 @@ export function createApp(
         createdAt: new Date().toISOString(),
       };
       store.update((database) => {
-        const current = database.sessions.find((item) => item.id === session.id)!;
+        const current = database.sessions.find(
+          (item) => item.id === session.id,
+        )!;
         current.messages.push(message);
         current.status = "aktif";
         current.updatedAt = message.createdAt;
@@ -729,7 +803,8 @@ export function createApp(
     (request: AuthenticatedRequest, response) => {
       store.update((database) => {
         for (const notification of database.notifications) {
-          if (notification.userId === request.auth?.sub) notification.read = true;
+          if (notification.userId === request.auth?.sub)
+            notification.read = true;
         }
       });
       response.status(204).send();
@@ -739,7 +814,7 @@ export function createApp(
   app.get(
     "/api/admin/overview",
     authenticate,
-    allowRoles("operator", "admin", "super_admin", "konselor"),
+    allowRoles("operator", "admin", "super_admin"),
     (_request, response) => {
       const database = store.read();
       response.json({
@@ -782,7 +857,9 @@ export function createApp(
           verified: z.boolean().optional(),
         })
         .parse(request.body);
-      const user = store.read().users.find((item) => item.id === request.params.id);
+      const user = store
+        .read()
+        .users.find((item) => item.id === request.params.id);
       if (!user) {
         response.status(404).json({ message: "Pengguna tidak ditemukan." });
         return;

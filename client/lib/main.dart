@@ -10,6 +10,7 @@ Future<void> main() async {
   final services = await createAppServices();
   await bootstrapApp(
     NsdAppAdmin(api: services.$1, session: services.$2),
+    session: services.$2,
   );
 }
 
@@ -21,13 +22,13 @@ class NsdAppAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
-        animation: session,
-        builder: (context, _) => MaterialApp(
-          title: 'NSD Admin',
-          debugShowCheckedModeBanner: false,
-          theme: nsdTheme(),
-          builder: (context, child) => child ?? const SizedBox.shrink(),
-          home: WebAdminShell(api: api, session: session),
-        ),
-      );
+    animation: session,
+    builder: (context, _) => MaterialApp(
+      title: 'NSD Admin',
+      debugShowCheckedModeBanner: false,
+      theme: nsdTheme(),
+      builder: (context, child) => child ?? const SizedBox.shrink(),
+      home: WebAdminShell(api: api, session: session),
+    ),
+  );
 }

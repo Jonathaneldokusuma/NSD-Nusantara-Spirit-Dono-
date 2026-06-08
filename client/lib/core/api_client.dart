@@ -24,7 +24,7 @@ class ApiClient {
     if (configured.isNotEmpty) return configured;
     if (kIsWeb) return 'https://nsdserver-production.up.railway.app/api';
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:4000/api';
+      return 'https://nsdserver-production.up.railway.app/api';
     }
     return 'http://localhost:4000/api';
   }

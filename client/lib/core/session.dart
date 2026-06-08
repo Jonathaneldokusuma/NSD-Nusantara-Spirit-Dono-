@@ -16,42 +16,52 @@ class AuthSession extends ChangeNotifier {
 
   bool get isAuthenticated => user != null;
 
-  Future<void> restore() async {
-    try {
-      if (Firebase.apps.isNotEmpty) {
-        final firebaseUser = fb.FirebaseAuth.instance.currentUser;
-        if (firebaseUser != null) {
-          api.token = await firebaseUser.getIdToken();
-          user = User(
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName ?? firebaseUser.email ?? 'Pengguna',
-            email: firebaseUser.email ?? '',
-            phone: firebaseUser.phoneNumber ?? '',
-            role: 'donatur',
-            verified: firebaseUser.emailVerified,
-          );
-          initializing = false;
-          notifyListeners();
-          return;
-        }
-      }
-    } on Exception {
-      // Fall back to local/demo session when Firebase is not configured yet.
-    }
-
-    final preferences = await SharedPreferences.getInstance();
-    final token = preferences.getString(_tokenKey);
-    if (token != null) {
-      api.token = token;
-      try {
-        user = User.fromJson(await api.get('/auth/me') as Json);
-      } on Exception {
-        await preferences.remove(_tokenKey);
-        api.token = null;
-      }
-    }
+  void finishInitialization() {
+    if (!initializing) return;
     initializing = false;
     notifyListeners();
+  }
+
+  Future<void> restore() async {
+    try {
+      try {
+        if (Firebase.apps.isNotEmpty) {
+          final firebaseUser = fb.FirebaseAuth.instance.currentUser;
+          if (firebaseUser != null) {
+            api.token = await firebaseUser.getIdToken();
+            user = User(
+              id: firebaseUser.uid,
+              name:
+                  firebaseUser.displayName ?? firebaseUser.email ?? 'Pengguna',
+              email: firebaseUser.email ?? '',
+              phone: firebaseUser.phoneNumber ?? '',
+              role: 'donatur',
+              verified: firebaseUser.emailVerified,
+            );
+            return;
+          }
+        }
+      } on Exception {
+        // Fall back to local/demo session when Firebase is not configured yet.
+      }
+
+      final preferences = await SharedPreferences.getInstance();
+      final token = preferences.getString(_tokenKey);
+      if (token != null) {
+        api.token = token;
+        try {
+          user = User.fromJson(
+            await api.get('/auth/me').timeout(const Duration(seconds: 10))
+                as Json,
+          );
+        } on Exception {
+          await preferences.remove(_tokenKey);
+          api.token = null;
+        }
+      }
+    } finally {
+      finishInitialization();
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -73,10 +83,7 @@ class AuthSession extends ChangeNotifier {
 
     try {
       final credential = await fb.FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: email.trim(),
-            password: password,
-          );
+          .signInWithEmailAndPassword(email: email.trim(), password: password);
       final firebaseUser = credential.user!;
       api.token = await firebaseUser.getIdToken();
       user = User(

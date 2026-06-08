@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "description": "Platform donasi darurat, transparansi dana, pengajuan bantuan, dan konseling NSD.",
-  "workspaces": ["server"],
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
     "dev": "concurrently --kill-others-on-fail -n API,FLUTTER -c blue,green \"npm run dev:api\" \"npm run dev:flutter\"",
     "dev:api": "npm run dev -w server",
@@ -29,5 +31,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
   }
 }

@@ -19,8 +19,17 @@ afterEach(() => {
 });
 
 describe("NSD API", () => {
+  async function login(app: ReturnType<typeof createApp>, email: string) {
+    return request(app).post("/api/auth/login").send({
+      email,
+      password: "Demo1234",
+    });
+  }
+
   it("returns public overview", async () => {
-    const response = await request(createApp(store)).get("/api/public/overview");
+    const response = await request(createApp(store)).get(
+      "/api/public/overview",
+    );
     expect(response.status).toBe(200);
     expect(response.body.campaigns.length).toBeGreaterThan(0);
     expect(response.body.stats.totalRaised).toBeGreaterThan(0);
@@ -28,15 +37,12 @@ describe("NSD API", () => {
 
   it("logs in and completes a donation", async () => {
     const app = createApp(store);
-    const login = await request(app).post("/api/auth/login").send({
-      email: "donatur@nsd.id",
-      password: "Demo1234",
-    });
-    expect(login.status).toBe(200);
+    const donorLogin = await login(app, "donatur@nsd.id");
+    expect(donorLogin.status).toBe(200);
 
     const donation = await request(app)
       .post("/api/donations")
-      .set("Authorization", `Bearer ${login.body.token}`)
+      .set("Authorization", `Bearer ${donorLogin.body.token}`)
       .send({
         campaignId: "cmp-banjir",
         amount: 50_000,
@@ -49,21 +55,59 @@ describe("NSD API", () => {
 
     const confirmation = await request(app)
       .post(`/api/donations/${donation.body.id}/confirm`)
-      .set("Authorization", `Bearer ${login.body.token}`);
+      .set("Authorization", `Bearer ${donorLogin.body.token}`);
     expect(confirmation.status).toBe(200);
     expect(confirmation.body.status).toBe("sukses");
   });
 
   it("protects admin endpoints from donor accounts", async () => {
     const app = createApp(store);
-    const login = await request(app).post("/api/auth/login").send({
-      email: "donatur@nsd.id",
-      password: "Demo1234",
-    });
+    const donorLogin = await login(app, "donatur@nsd.id");
     const response = await request(app)
       .get("/api/admin/users")
-      .set("Authorization", `Bearer ${login.body.token}`);
+      .set("Authorization", `Bearer ${donorLogin.body.token}`);
     expect(response.status).toBe(403);
   });
-});
 
+  it("blocks counselors from admin overview", async () => {
+    const app = createApp(store);
+    const counselorLogin = await login(app, "konselor@nsd.id");
+
+    const response = await request(app)
+      .get("/api/admin/overview")
+      .set("Authorization", `Bearer ${counselorLogin.body.token}`);
+
+    expect(response.status).toBe(403);
+  });
+
+  it("limits counselors to assigned applications and recommendation updates", async () => {
+    const app = createApp(store);
+    const counselorLogin = await login(app, "konselor@nsd.id");
+
+    const applications = await request(app)
+      .get("/api/applications")
+      .set("Authorization", `Bearer ${counselorLogin.body.token}`);
+
+    expect(applications.status).toBe(200);
+    expect(applications.body).toHaveLength(1);
+    expect(applications.body[0].counselorId).toBe("usr-counselor");
+
+    const forbiddenApproval = await request(app)
+      .patch(`/api/applications/${applications.body[0].id}`)
+      .set("Authorization", `Bearer ${counselorLogin.body.token}`)
+      .send({ status: "disetujui" });
+
+    expect(forbiddenApproval.status).toBe(403);
+
+    const recommendation = await request(app)
+      .patch(`/api/applications/${applications.body[0].id}`)
+      .set("Authorization", `Bearer ${counselorLogin.body.token}`)
+      .send({
+        status: "direkomendasikan",
+        counselorNotes: "Layak direkomendasikan untuk verifikasi admin.",
+      });
+
+    expect(recommendation.status).toBe(200);
+    expect(recommendation.body.status).toBe("direkomendasikan");
+  });
+});

@@ -11,11 +11,15 @@ class AuthScreen extends StatefulWidget {
     super.key,
     this.registerInitially = false,
     this.initialRole = 'donatur',
+    this.allowRegistration = true,
+    this.demoText = 'Demo: donatur@nsd.id / Demo1234',
   });
 
   final AuthSession session;
   final bool registerInitially;
   final String initialRole;
+  final bool allowRegistration;
+  final String demoText;
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -35,7 +39,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
-    _register = widget.registerInitially;
+    _register = widget.allowRegistration && widget.registerInitially;
     _role = widget.initialRole;
   }
 
@@ -63,7 +67,7 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         await widget.session.login(_email.text, _password.text);
       }
-      if (mounted) Navigator.pop(context, true);
+      if (mounted && Navigator.canPop(context)) Navigator.pop(context, true);
     } on ApiException catch (error) {
       if (mounted) showMessage(context, error.message, error: true);
     } finally {
@@ -105,10 +109,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const NsdLogo(),
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.close),
-                              ),
+                              if (Navigator.canPop(context))
+                                IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: const Icon(Icons.close),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 30),
@@ -227,20 +232,23 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                           const SizedBox(height: 12),
                           TextButton(
-                            onPressed: () =>
-                                setState(() => _register = !_register),
+                            onPressed: widget.allowRegistration
+                                ? () => setState(() => _register = !_register)
+                                : null,
                             child: Text(
-                              _register
-                                  ? 'Sudah punya akun? Masuk'
-                                  : 'Belum punya akun? Daftar',
+                              widget.allowRegistration
+                                  ? _register
+                                        ? 'Sudah punya akun? Masuk'
+                                        : 'Belum punya akun? Daftar'
+                                  : 'Registrasi hanya melalui aplikasi user',
                             ),
                           ),
                           if (!_register) ...[
                             const Divider(height: 32),
-                            const Text(
-                              'Demo: donatur@nsd.id / Demo1234',
+                            Text(
+                              widget.demoText,
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12),
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ],
                         ],

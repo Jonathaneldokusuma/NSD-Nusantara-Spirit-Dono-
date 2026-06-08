@@ -30,11 +30,17 @@ class _CounselingScreenState extends State<CounselingScreen> {
 
   Future<void> _load() async {
     try {
-      final counselors = (await widget.api.get('/counselors') as List<dynamic>)
+      final counselors = (await widget.api
+              .get('/counselors')
+              .timeout(const Duration(seconds: 12))
+          as List<dynamic>)
           .map((item) => User.fromJson(item as Json))
           .toList();
       final sessions = widget.session.isAuthenticated
-          ? (await widget.api.get('/sessions') as List<dynamic>)
+          ? (await widget.api
+                  .get('/sessions')
+                  .timeout(const Duration(seconds: 12))
+              as List<dynamic>)
               .map((item) => CounselingSession.fromJson(item as Json))
               .toList()
           : <CounselingSession>[];
@@ -46,6 +52,14 @@ class _CounselingScreenState extends State<CounselingScreen> {
         });
       }
     } on ApiException {
+      if (mounted) {
+        setState(() {
+          _counselors = seedCounselors;
+          _sessions = [];
+          _loading = false;
+        });
+      }
+    } on Exception {
       if (mounted) {
         setState(() {
           _counselors = seedCounselors;

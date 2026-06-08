@@ -32,8 +32,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   io.Socket? _socket;
 
   User get user => widget.session.user!;
-  bool get _isManagement =>
-      ['operator', 'admin', 'super_admin', 'konselor'].contains(user.role);
+  bool get _isInternalAdmin =>
+      ['operator', 'admin', 'super_admin'].contains(user.role);
+  bool get _isCounselor => user.role == 'konselor';
+  bool get _canReviewApplications => _isInternalAdmin || _isCounselor;
 
   List<_NavItem> get _navigation {
     final items = <_NavItem>[
@@ -60,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const _NavItem('Ruang Konseling', Icons.forum_outlined, 'sessions'),
       );
     }
-    if (['operator', 'admin', 'super_admin'].contains(user.role)) {
+    if (_isInternalAdmin) {
       items.add(
         const _NavItem('Kelola Campaign', Icons.campaign_outlined, 'campaigns'),
       );
@@ -129,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             (await widget.api.get('/applications/mine') as List<dynamic>)
                 .map((item) => AidApplication.fromJson(item as Json))
                 .toList();
-      } else {
+      } else if (_canReviewApplications) {
         applications = (await widget.api.get('/applications') as List<dynamic>)
             .map((item) => AidApplication.fromJson(item as Json))
             .toList();
@@ -139,12 +141,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map((item) => CounselingSession.fromJson(item as Json))
             .toList();
       }
-      if (_isManagement || ['donatur', 'pemohon'].contains(user.role)) {
+      if (_isInternalAdmin || ['donatur', 'pemohon'].contains(user.role)) {
         counselors = (await widget.api.get('/counselors') as List<dynamic>)
             .map((item) => User.fromJson(item as Json))
             .toList();
       }
-      if (_isManagement) {
+      if (_isInternalAdmin) {
         adminOverview = await widget.api.get('/admin/overview') as Json;
       }
       if (['admin', 'super_admin'].contains(user.role)) {
@@ -428,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _summaryView() {
     final stats = _overview!.stats;
     final managementTotals = _adminOverview?['totals'] as Json?;
-    final cards = _isManagement
+    final cards = _isInternalAdmin
         ? [
             (
               'Total pengguna',
@@ -455,6 +457,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 compact: true,
               ),
               Icons.payments_outlined,
+              NsdColors.coral,
+            ),
+          ]
+        : _isCounselor
+        ? [
+            (
+              'Pengajuan ditugaskan',
+              '${_applications.length}',
+              Icons.fact_check_outlined,
+              NsdColors.green,
+            ),
+            (
+              'Perlu tindak lanjut',
+              '${_applications.where((item) => ['diajukan', 'konseling'].contains(item.status)).length}',
+              Icons.assignment_late_outlined,
+              NsdColors.gold,
+            ),
+            (
+              'Direkomendasikan',
+              '${_applications.where((item) => item.status == 'direkomendasikan').length}',
+              Icons.verified_outlined,
+              NsdColors.blue,
+            ),
+            (
+              'Sesi aktif',
+              '${_sessions.where((item) => item.status != 'selesai').length}',
+              Icons.forum_outlined,
               NsdColors.coral,
             ),
           ]
@@ -498,8 +527,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          _isManagement
+          _isInternalAdmin
               ? 'Berikut ringkasan operasional NSD hari ini.'
+              : _isCounselor
+              ? 'Berikut antrean pendampingan yang ditugaskan ke akun Anda.'
               : 'Terima kasih sudah menjadi bagian dari gerakan bantuan NSD.',
         ),
         const SizedBox(height: 24),
@@ -587,13 +618,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _isManagement
+                      _isInternalAdmin
                           ? 'Aktivitas terbaru'
                           : 'Notifikasi terbaru',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
-                    if (_isManagement)
+                    if (_isInternalAdmin)
                       ...((_adminOverview?['recentAudit'] as List<dynamic>? ??
                               [])
                           .take(5)
@@ -712,7 +743,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     children: [
       _viewHeader(
         'Pengajuan bantuan',
-        _isManagement
+        _canReviewApplications
             ? 'Verifikasi kebutuhan, tugaskan konselor, dan kelola persetujuan.'
             : 'Ajukan kebutuhan dan pantau proses verifikasinya.',
         action: ['donatur', 'pemohon'].contains(user.role)
@@ -792,7 +823,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       if (application.counselorNotes != null)
                         Text(application.counselorNotes!),
                     ],
-                    if (_isManagement) ...[
+                    if (_canReviewApplications) ...[
                       const SizedBox(height: 15),
                       Align(
                         alignment: Alignment.centerRight,
@@ -1244,6 +1275,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _showApplicationManagement(AidApplication application) async {
     var status = application.status;
     String? counselorId = application.counselorId;
+    final statusOptions = _isCounselor
+        ? const ['konseling', 'direkomendasikan']
+        : const [
+            'diajukan',
+            'konseling',
+            'direkomendasikan',
+            'disetujui',
+            'ditolak',
+            'dipublikasikan',
+          ];
+    if (!statusOptions.contains(status)) status = statusOptions.first;
     final notes = TextEditingController(
       text: application.counselorNotes ?? application.adminNotes ?? '',
     );
@@ -1260,39 +1302,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: status,
                   decoration: const InputDecoration(labelText: 'Status'),
-                  items:
-                      const [
-                            'diajukan',
-                            'konseling',
-                            'direkomendasikan',
-                            'disetujui',
-                            'ditolak',
-                            'dipublikasikan',
-                          ]
-                          .map(
-                            (value) => DropdownMenuItem(
-                              value: value,
-                              child: Text(statusLabel(value)),
-                            ),
-                          )
-                          .toList(),
-                  onChanged: (value) => setDialogState(() => status = value!),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: counselorId,
-                  decoration: const InputDecoration(labelText: 'Konselor'),
-                  items: _counselors
+                  items: statusOptions
                       .map(
-                        (item) => DropdownMenuItem(
-                          value: item.id,
-                          child: Text(item.name),
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(statusLabel(value)),
                         ),
                       )
                       .toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => counselorId = value),
+                  onChanged: (value) => setDialogState(() => status = value!),
                 ),
+                if (_isInternalAdmin) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: counselorId,
+                    decoration: const InputDecoration(labelText: 'Konselor'),
+                    items: _counselors
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.id,
+                            child: Text(item.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) =>
+                        setDialogState(() => counselorId = value),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 TextField(
                   controller: notes,
@@ -1311,8 +1347,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onPressed: () async {
                 try {
                   final body = <String, dynamic>{'status': status};
-                  if (counselorId != null) body['counselorId'] = counselorId;
-                  if (user.role == 'konselor') {
+                  if (_isInternalAdmin && counselorId != null) {
+                    body['counselorId'] = counselorId;
+                  }
+                  if (_isCounselor) {
                     body['counselorNotes'] = notes.text;
                   } else {
                     body['adminNotes'] = notes.text;
