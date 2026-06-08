@@ -25,7 +25,7 @@ if (fs.existsSync(clientDist)) {
 const httpServer = http.createServer(app);
 io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: process.env.CLIENT_ORIGIN || true,
     credentials: true,
   },
 });
